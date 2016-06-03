@@ -1,5 +1,182 @@
-extends layout
-
-block content
-  h1= title
-  p Welcome to #{title}
+doctype html
+html
+  head(lang='en')
+    meta(charset='UTF-8')
+    title
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js')
+    link(rel='stylesheet', href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css')
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js')
+    script(src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js')
+  body
+    .container
+      table.table.table-hover.table-cascade.table-bordered.table-striped.table-condensed(width='600px;', style='align:center')
+        thead
+          tr
+            th(style='display:none') id
+            th Name
+            th Reps
+            th Weight
+            th Date
+            th Lbs
+            th Edit Action
+            th Delete Action
+      table#personDataTable.table.table-hover.table-cascade.table-bordered.table-striped.table-condensed
+      .panel.panel-default(style='margin-left: 255px;margin-right: 272px;margin-top: 89px;margin-bottom: 102px;')
+        .panel-body
+          .form-group
+            label(for='name') Name:
+            input#name.form-control(type='text', placeholder='Enter name')
+          .form-group
+            label(for='reps') Reps:
+            input#reps.form-control(type='text', placeholder='Enter reps')
+          .form-group
+            label(for='weight') Weight:
+            input#weight.form-control(type='text', placeholder='Enter weight')
+          .form-group
+            label(for='date') Date:
+            input#date.form-control(type='text', placeholder='Enter date')
+          .form-group
+            label(for='lbs') Lbs:
+            input#lbs.form-control(type='text', placeholder='Enter lbs')
+          button.btn.btn-default.btn-warning(type='submit', onclick='addRow()') Add
+          button.btn.btn-default.btn-warning(type='submit', onclick='updateRow()') Update
+          input#hidden_id(type='hidden')
+    script.
+      $.ajax({
+      url: 'http://localhost:3000/crud/',
+      type: "get",
+      dataType: "json",
+      success: function(data, textStatus, jqXHR) {
+      // since we are using jQuery, you don't need to parse response
+      //            console.log(data);
+      drawTable(data);
+      }
+      });
+      function getAllData()
+      {
+      $.ajax({
+      url: 'http://localhost:3000/crud/',
+      type: "get",
+      dataType: "json",
+      success: function(data, textStatus, jqXHR) {
+      // since we are using jQuery, you don't need to parse response
+      //            console.log(data);
+      drawTable(data);
+      }
+      });
+      }
+      function drawTable(data) {
+      for (var i = 0; i < data.length; i++) {
+      drawRow(data[i]);
+      }
+      }
+      function drawRow(rowData)
+      {
+      var row = $("<tr />")
+      $("#personDataTable").append(row); //this will append tr element to table... keep its reference for a while since we will add cels into it
+      row.append($("<td style='display:none'>" + rowData.id + "</td>"));
+      row.append($("<td>" + rowData.name + "</td>"));
+      row.append($("<td>" + rowData.reps + "</td>"));
+      row.append($("<td>" + rowData.weight + "</td>"));
+      row.append($("<td>" + rowData.date + "</td>"));
+      row.append($("<td>" + rowData.lbs + "</td>"));
+      row.append($("<td>"+ "<button type='submit'' class='btn btn-info edit-btn' id="+rowData.id+">Edit</button>"+ "</td>"));
+      row.append($("<td>"+ "<button type='submit'' class='btn btn-warning delete-btn' id="+rowData.id+">Delete</button>"+  "</td>"));
+      }
+      $(document).on('click', '.edit-btn', function ()
+      {
+      editPopulateData(this.id);
+      });
+      $(document).on('click', '.delete-btn', function () {
+      deleteRow(this.id);
+      });
+      function editPopulateData(id)
+      {
+      $('#hidden_id').val(id);
+      $.ajax({
+      url: 'http://localhost:3000/crud/get/'+id,
+      type: "get",
+      dataType: "json",
+      success: function(data, textStatus, jqXHR)
+      {
+      for (var i = 0; i < data.length; i++)
+      {
+      /*alert(data[i].name + " - " +  data[i].reps + " - " +  data[i].weight + " - " +
+      data[i].date + " - " +  data[i].lbs );*/
+      $('#name').val(data[i].name);
+      $('#reps').val(data[i].reps);
+      $('#weight').val(data[i].weight);
+      $('#lbs').val(data[i].lbs);
+      $('#date').val(data[i].date);
+      }
+      //console.log(data);
+      //drawTable(data);
+      }
+      });
+      }
+      //to add a resource
+      function addRow() {
+      var form_data = {
+      'name': $('#name').val(),
+      'reps': $('#reps').val(),
+      'weight': $('#weight').val(),
+      'date': $('#date').val(),
+      'lbs': $('#lbs').val()
+      };
+      $.ajax({
+      url: 'http://localhost:3000/crud/add',
+      type: "post",
+      dataType: "json",
+      data:form_data,
+      success: function(data, textStatus, jqXHR)
+      {
+      drawRow(form_data);
+      }
+      });
+      }
+      function updateRow()
+      {
+      //alert(id);
+      var id = $('#hidden_id').val();
+      var form_data = {
+      'name': $('#name').val(),
+      'reps': $('#reps').val(),
+      'weight': $('#weight').val(),
+      'date': $('#date').val(),
+      'lbs': $('#lbs').val()
+      };
+      /* var form_data = {
+      'name': 'NEW NEW',
+      'reps': 999,
+      'weight': 300,
+      'date': '1990-01-23',
+      'lbs': 20
+      };*/
+      $.ajax({
+      url: 'http://localhost:3000/crud/edit/'+id,
+      type: "post",
+      dataType: "json",
+      data:form_data,
+      success: function(data, textStatus, jqXHR)
+      {
+      $('#personDataTable').html("");
+      //alert('Updated');
+      console.log(data);
+      getAllData();
+      }
+      });
+      }
+      // to delete a resource
+      function deleteRow(id){
+      //alert(id);
+      $.ajax({
+      url: 'http://localhost:3000/crud/delete/'+id,
+      type: "post",
+      success: function(data, textStatus, jqXHR) {
+      $('#personDataTable').html("");
+      //alert('Deleted');
+      console.log(data);
+      getAllData();
+      }
+      });
+      }
